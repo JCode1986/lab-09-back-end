@@ -35,6 +35,10 @@ Use this area to document the iterative changes made to your application as each
 
 04-19-2019 09:30am - Updated ReadMe
 
+04-19-2019 10:45am - Refactored some code
+
+04-19-2019 01:20pm - Attempted to create function that stores weather data in Data Base
+
 
 
 ## Credits and Collaborations
