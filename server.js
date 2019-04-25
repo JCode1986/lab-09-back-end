@@ -137,7 +137,15 @@ function get_yelp(request, response) {
 }
 
 function get_trails(request, response) {
-  response.send('Under Construction...');
+  const URL = `https://www.hikingproject.com/data/get-trails`;
+  superagent.get(URL)
+    .query(`key=${process.env.TRAIL_API_KEY}`)
+    .query(`lat=${request.query.data.latitude}`)
+    .query(`lon=${request.query.data.longitude}`)
+    .then(result => {
+      return response.send(result.body.trails);
+    })
+    .catch(console.error)
 }
 
 function get_events(request, response) {
