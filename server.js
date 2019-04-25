@@ -52,10 +52,10 @@ API.geoCode = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
 API.darksky = 'https://api.darksky.net/forecast/';
 
 //Error handler
-function error_handler(error, response) {
-  console.error(error);
-  if (response) response.status(500).send('Sorry, something went wrong')
-}
+// function error_handler(error, response) {
+//   console.error(error);
+//   if (response) response.status(500).send('Sorry, something went wrong')
+// }
 
 
 //Constructor Functions
@@ -79,41 +79,60 @@ function get_location(request, response) {
 
   const URL = `https://maps.googleapis.com/maps/api/geocode/json?address=${search_query}&key=${process.env.GEOCODE_API_KEY}`;
 
-  superagent.get(URL).then(result => {
-    const searched_result = result.body.results[0];
-    const formatted_query = searched_result.formatted_address;
-    const latitude = searched_result.geometry.location.lat;
-    const longitude = searched_result.geometry.location.lng;
+  client.query(SQL.getLocation, [search_query])
+    .then(result => {
+      if (result.rowCount > 0)
+        response.send(result.rows[0]);
+      
+      superagent.get(URL)
+        .then(result => {
+          const searched_result = result.body.results[0];
+          const formatted_query = searched_result.formatted_address;
+          const latitude = searched_result.geometry.location.lat;
+          const longitude = searched_result.geometry.location.lng;
 
-    response_data_object = new Location_data(search_query, formatted_query, latitude, longitude);
-    response.send(response_data_object);
-    client.query(SQL.insertLocation, [search_query, formatted_query, latitude, longitude]);
-  });
-  error_handler()
+          response_data_object = new Location_data(search_query, formatted_query, latitude, longitude);
+          response.send(response_data_object);
+          client.query(SQL.insertLocation, [search_query, formatted_query, latitude, longitude]);
+        })
+        .catch(console.error)
+
+    }).catch(console.error)
 }
 
 function get_weather(request, response) {
-
   const URL = `https://api.darksky.net/forecast/${process.env.WEATHER_API_KEY}/${request.query.data.latitude},${request.query.data.longitude}`;
-  superagent.get(URL).then(result => {
+  superagent.get(URL)
+    .then(result => {
+      if(result.body.latitude === Number(request.query.data.latitude) && result.body.longitude === Number(request.query.data.longitude)){
+        //dailyData = array of daily data objects
+        let dailyData = result.body.daily.data;
+        const dailyWeather = dailyData.map((dailyDataObj) => {
+          //summary = "Foggy in the morning."
+          let summary = dailyDataObj.summary;
+          //time = 1540018800; converted to standart time
+          let time = new Date(dailyDataObj.time * 1000).toString().slice(0, 15) ;
 
-    if(result.body.latitude === Number(request.query.data.latitude) && result.body.longitude === Number(request.query.data.longitude)){
-      //dailyData = array of daily data objects
-      let dailyData = result.body.daily.data;
-      const dailyWeather = dailyData.map((dailyDataObj) => {
-        //summary = "Foggy in the morning."
-        let summary = dailyDataObj.summary;
-        //time = 1540018800; converted to standart time
-        let time = new Date(dailyDataObj.time * 1000).toString().slice(0, 15) ;
+          //For each entry within dailyData array
+          //Create new weather object
+          return new Weather_data(summary, time);
+        });
+        response.send(dailyWeather);
+      }
+    })
+    .catch(console.error)
+}
 
-        //For each entry within dailyData array
-        //Create new weather object
-        return new Weather_data(summary, time);
-      });
-      response.send(dailyWeather);
-    }
-  })
-  error_handler()
+function get_yelp(request, response) {
+  const URL = `https://api.yelp.com/v3/businesses/search/,${request.query.data.longitude}`;
+  superagent.get(URL)
+    .set({'Content-Type': 'application/json', 'Authorization': 'Bearer ' + `${process.env.YELP_API_KEY}`})
+    .query(`latitude=${request.query.data.latitude}`)
+    .query(`longitude=${request.query.data.longitude}`)
+    .then(result => {
+      response.send(result);
+    })
+    .catch(console.error)
 }
 
 app.listen(PORT, () => {
