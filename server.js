@@ -34,9 +34,10 @@ app.use(cors());
 //API routes
 app.get('/location', get_location);
 app.get('/weather', get_weather);
-// app.get('/yelp', get_yelp);
-// app.get('/trails', get_trails);
-// app.get('/events', get_events);
+app.get('/yelp', get_yelp);
+app.get('/trails', get_trails);
+app.get('/events', get_events);
+app.get('/movies', get_movies);
 
 app.use('*', (request, response) => {
   response.send('Our server runs.');
@@ -82,7 +83,7 @@ function get_location(request, response) {
   client.query(SQL.getLocation, [search_query])
     .then(result => {
       if (result.rowCount > 0)
-        response.send(result.rows[0]);
+        return response.send(result.rows[0]);
       
       superagent.get(URL)
         .then(result => {
@@ -124,15 +125,27 @@ function get_weather(request, response) {
 }
 
 function get_yelp(request, response) {
-  const URL = `https://api.yelp.com/v3/businesses/search/,${request.query.data.longitude}`;
+  const URL = `https://api.yelp.com/v3/businesses/search`;
   superagent.get(URL)
-    .set({'Content-Type': 'application/json', 'Authorization': 'Bearer ' + `${process.env.YELP_API_KEY}`})
+    .set('Authorization', `Bearer ${process.env.YELP_API_KEY}`)
     .query(`latitude=${request.query.data.latitude}`)
     .query(`longitude=${request.query.data.longitude}`)
     .then(result => {
-      response.send(result);
+      return response.send(result.body.businesses);
     })
     .catch(console.error)
+}
+
+function get_trails(request, response) {
+  response.send('Under Construction...');
+}
+
+function get_events(request, response) {
+  response.send('Under Construction...');
+}
+
+function get_movies(request, response) {
+  response.send('Under Construction...')
 }
 
 app.listen(PORT, () => {
