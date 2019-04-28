@@ -1,9 +1,6 @@
 'use strict';
 
-
 require('dotenv').config();
-
-
 
 //global constants
 const PORT = process.env.PORT || 3000 ;
@@ -36,7 +33,7 @@ app.get('/location', get_location);
 app.get('/weather', get_weather);
 app.get('/yelp', get_yelp);
 app.get('/trails', get_trails);
-app.get('/events', get_events);
+app.get('/meetups', get_meetups);
 app.get('/movies', get_movies);
 
 app.use('*', (request, response) => {
@@ -53,10 +50,10 @@ API.geoCode = 'https://maps.googleapis.com/maps/api/geocode/json?address=';
 API.darksky = 'https://api.darksky.net/forecast/';
 
 //Error handler
-// function error_handler(error, response) {
-//   console.error(error);
-//   if (response) response.status(500).send('Sorry, something went wrong')
-// }
+function error_handler(error, response) {
+  console.error(error);
+  if (response) response.status(500).send('Sorry, something went wrong')
+}
 
 
 //Constructor Functions
@@ -72,9 +69,10 @@ function Weather_data(summary, time){
   this.time = time;
 }
 
+
+
 //Other Functions
 function get_location(request, response) {
-
   //user input - ex: if they type in Seattle...search_quer = Seattle
   const search_query = request.query.data;
 
@@ -84,7 +82,6 @@ function get_location(request, response) {
     .then(result => {
       if (result.rowCount > 0)
         return response.send(result.rows[0]);
-      
       superagent.get(URL)
         .then(result => {
           const searched_result = result.body.results[0];
@@ -96,9 +93,13 @@ function get_location(request, response) {
           response.send(response_data_object);
           client.query(SQL.insertLocation, [search_query, formatted_query, latitude, longitude]);
         })
-        .catch(console.error)
+        .catch((error) => {
+          error_handler(error, response);
+        })
 
-    }).catch(console.error)
+    }).catch((error) => {
+      error_handler(error, response);
+    })
 }
 
 function get_weather(request, response) {
@@ -121,7 +122,9 @@ function get_weather(request, response) {
         response.send(dailyWeather);
       }
     })
-    .catch(console.error)
+    .catch((error) => {
+      error_handler(error, response);
+    })
 }
 
 function get_yelp(request, response) {
@@ -133,7 +136,9 @@ function get_yelp(request, response) {
     .then(result => {
       return response.send(result.body.businesses);
     })
-    .catch(console.error)
+    .catch((error) => {
+      error_handler(error, response);
+    })
 }
 
 function get_trails(request, response) {
@@ -145,10 +150,12 @@ function get_trails(request, response) {
     .then(result => {
       return response.send(result.body.trails);
     })
-    .catch(console.error)
+    .catch((error) => {
+      error_handler(error, response);
+    })
 }
 
-function get_events(request, response) {
+function get_meetups(request, response) {
   response.send('Under Construction...');
 }
 
