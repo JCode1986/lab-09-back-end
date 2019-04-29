@@ -80,6 +80,7 @@ function get_location(request, response) {
 
   client.query(SQL.getLocation, [search_query])
     .then(result => {
+      console.log('b');
       if (result.rowCount > 0)
         return response.send(result.rows[0]);
       superagent.get(URL)
@@ -100,6 +101,7 @@ function get_location(request, response) {
     }).catch((error) => {
       error_handler(error, response);
     })
+  console.log('a');
 }
 
 function get_weather(request, response) {
